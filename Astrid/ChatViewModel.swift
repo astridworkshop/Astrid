@@ -12,7 +12,7 @@
 //  Responsibilities (current):
 //  - Owns chat session lifecycle and identity (`sessions[]`, `activeSessionID`).
 //  - Provides a compatibility `messages` view over the active session transcript.
-//  - Routes send/retry through LM Studio with request/session isolation so late responses cannot land in the wrong chat.
+//  - Routes send/retry through Server with request/session isolation so late responses cannot land in the wrong chat.
 //  - Manages runtime-only UI state (draft input, sending/typing flags, status, errors).
 //  - Persists chat state to disk (JSON in Application Support) and restores on launch.
 //
@@ -76,28 +76,28 @@ final class ChatViewModel: ObservableObject {
     }
 
 
-    // MARK: - LM Studio model resolution (Auto-follow current loaded model)
+    // MARK: - Server model resolution (Auto-follow current loaded model)
 
-    /// The model id currently reported by LM Studio (/v1/models). When nil, Astrid should block sends.
+    /// The model id currently reported by Server (/v1/models). When nil, Astrid should block sends.
     @Published private(set) var resolvedModelAPIName: String?
 
-    /// True when LM Studio responds successfully to /v1/models.
-    @Published private(set) var isLMStudioReachable: Bool = false
+    /// True when Server responds successfully to /v1/models.
+    @Published private(set) var isServerReachable: Bool = false
 
     /// Human-readable status for UI/debug (e.g., "Connected — llama-3.1-8b", "No model loaded", "Unreachable").
-    @Published private(set) var lmStudioModelStatus: String = "Unknown"
+    @Published private(set) var ServerModelStatus: String = "Unknown"
 
-    private let client: LMStudioClient
+    private let client: ServerClient
 
-    private static let serverURLDefaultsKey = "lmstudio.serverURL"
+    private static let serverURLDefaultsKey = "Server.serverURL"
 
-    private func configuredClient() -> LMStudioClient {
+    private func configuredClient() -> ServerClient {
         let fallback = "http://127.0.0.1:1234"
         let raw = UserDefaults.standard.string(forKey: Self.serverURLDefaultsKey)?
             .trimmingCharacters(in: .whitespacesAndNewlines)
 
         let chosen = (raw?.isEmpty == false) ? raw! : fallback
-        return LMStudioClient(baseURL: chosen)
+        return ServerClient(baseURL: chosen)
     }
 
     private func configuredBaseURLString() -> String {
@@ -113,7 +113,7 @@ final class ChatViewModel: ObservableObject {
     private var activeRequestSessionID: UUID?
 
     // MARK: - Session 7B: Title generation (neutral, one-shot, non-blocking)
-    // MARK: - LM Studio discovery (/v1/models)
+    // MARK: - Server discovery (/v1/models)
 
     private struct LMModelsResponse: Codable {
         struct Model: Codable {
@@ -122,15 +122,15 @@ final class ChatViewModel: ObservableObject {
         let data: [Model]
     }
 
-    /// Refreshes `resolvedModelAPIName` by querying LM Studio's OpenAI-like `/v1/models` endpoint.
-    /// Assumption: LM Studio returns the currently loaded model as the first (and often only) entry.
-    func refreshLMStudioModel() async {
+    /// Refreshes `resolvedModelAPIName` by querying Server's OpenAI-like `/v1/models` endpoint.
+    /// Assumption: Server returns the currently loaded model as the first (and often only) entry.
+    func refreshServerModel() async {
         // Normalize to avoid double `/v1` or trailing slash issues.
-        let normalizedBase = LMStudioClient(baseURL: configuredBaseURLString()).baseURLString
+        let normalizedBase = ServerClient(baseURL: configuredBaseURLString()).baseURLString
         guard let url = URL(string: normalizedBase)?.appendingPathComponent("v1").appendingPathComponent("models") else {
-            isLMStudioReachable = false
+            isServerReachable = false
             resolvedModelAPIName = nil
-            lmStudioModelStatus = "Invalid server URL"
+            ServerModelStatus = "Invalid server URL"
             return
         }
 
@@ -141,26 +141,26 @@ final class ChatViewModel: ObservableObject {
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
             guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
-                isLMStudioReachable = false
+                isServerReachable = false
                 resolvedModelAPIName = nil
-                lmStudioModelStatus = "Unreachable"
+                ServerModelStatus = "Unreachable"
                 return
             }
 
             let decoded = try JSONDecoder().decode(LMModelsResponse.self, from: data)
-            isLMStudioReachable = true
+            isServerReachable = true
 
             if let first = decoded.data.first?.id, !first.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 resolvedModelAPIName = first
-                lmStudioModelStatus = "Connected — \(first)"
+                ServerModelStatus = "Connected — \(first)"
             } else {
                 resolvedModelAPIName = nil
-                lmStudioModelStatus = "Connected — No model loaded"
+                ServerModelStatus = "Connected — No model loaded"
             }
         } catch {
-            isLMStudioReachable = false
+            isServerReachable = false
             resolvedModelAPIName = nil
-            lmStudioModelStatus = "Unreachable"
+            ServerModelStatus = "Unreachable"
         }
     }
 
@@ -184,11 +184,11 @@ final class ChatViewModel: ObservableObject {
     private let persistenceSchemaVersion: Int = 1
     private var pendingSaveTask: Task<Void, Never>?
 
-    init(client: LMStudioClient) {
+    init(client: ServerClient) {
         self.client = client
         loadPersistedState()
         Task { [weak self] in
-            await self?.refreshLMStudioModel()
+            await self?.refreshServerModel()
         }
     }
 
@@ -372,7 +372,7 @@ final class ChatViewModel: ObservableObject {
         // Locked rule: only after first assistant reply exists.
         guard session.messages.contains(where: { $0.role == .assistant }) else { return }
 
-        // Use LM Studio's currently resolved model.
+        // Use Server's currently resolved model.
         let model = self.resolvedModelAPIName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         if model.isEmpty {
             let fallback = self.fallbackTitle(for: session)
@@ -556,7 +556,7 @@ final class ChatViewModel: ObservableObject {
         }.value
     }
 
-    /// Primary send method: always uses LM Studio's resolved model.
+    /// Primary send method: always uses Server's resolved model.
     func send(systemPrompt: String) {
         let prompt = input.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !prompt.isEmpty else { return }
@@ -605,18 +605,18 @@ final class ChatViewModel: ObservableObject {
             // Resolve current model
             var model = self.resolvedModelAPIName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
             if model.isEmpty {
-                await self.refreshLMStudioModel()
+                await self.refreshServerModel()
                 model = self.resolvedModelAPIName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
                 if model.isEmpty {
-                    if self.isLMStudioReachable == false {
-                        self.updateActiveSession { $0.messages.append(ChatMessage(role: .error, content: "LM Studio is not reachable. Make sure the server is running and the URL is correct.")) }
+                    if self.isServerReachable == false {
+                        self.updateActiveSession { $0.messages.append(ChatMessage(role: .error, content: "Server is not reachable. Make sure the server is running and the URL is correct.")) }
                         self.status = "Error"
-                        self.lastError = "LM Studio is not reachable"
+                        self.lastError = "Server is not reachable"
                         return
                     }
-                    self.updateActiveSession { $0.messages.append(ChatMessage(role: .error, content: "No model loaded in LM Studio. Load a model in LM Studio and try again.")) }
+                    self.updateActiveSession { $0.messages.append(ChatMessage(role: .error, content: "No model loaded in Server. Load a model in Server and try again.")) }
                     self.status = "Error"
-                    self.lastError = "No model loaded in LM Studio"
+                    self.lastError = "No model loaded in Server"
                     return
                 }
             }
@@ -649,7 +649,7 @@ final class ChatViewModel: ObservableObject {
         }
     }
 
-    /// Primary retry method: always uses LM Studio's resolved model.
+    /// Primary retry method: always uses Server's resolved model.
     func retry(systemPrompt: String) {
         guard !isSending else { return }
 
@@ -691,18 +691,18 @@ final class ChatViewModel: ObservableObject {
             // Resolve current model
             var model = self.resolvedModelAPIName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
             if model.isEmpty {
-                await self.refreshLMStudioModel()
+                await self.refreshServerModel()
                 model = self.resolvedModelAPIName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
                 if model.isEmpty {
-                    if self.isLMStudioReachable == false {
-                        self.updateActiveSession { $0.messages.append(ChatMessage(role: .error, content: "LM Studio is not reachable. Make sure the server is running and the URL is correct.")) }
+                    if self.isServerReachable == false {
+                        self.updateActiveSession { $0.messages.append(ChatMessage(role: .error, content: "Server is not reachable. Make sure the server is running and the URL is correct.")) }
                         self.status = "Error"
-                        self.lastError = "LM Studio is not reachable"
+                        self.lastError = "Server is not reachable"
                         return
                     }
-                    self.updateActiveSession { $0.messages.append(ChatMessage(role: .error, content: "No model loaded in LM Studio. Load a model in LM Studio and try again.")) }
+                    self.updateActiveSession { $0.messages.append(ChatMessage(role: .error, content: "No model loaded in Server. Load a model in Server and try again.")) }
                     self.status = "Error"
-                    self.lastError = "No model loaded in LM Studio"
+                    self.lastError = "No model loaded in Server"
                     return
                 }
             }

@@ -3,7 +3,7 @@
 //  Astrid
 //
 //  Settings landing screen with navigation to subpages.
-//  Presents links to LMStudioSettingsView, PersonalizationView, AboutView, and HelpGettingStartedView.
+//  Presents links to ServerSettingsView, PersonalizationView, AboutView, and HelpGettingStartedView.
 //  Copyright © 2026 Astrid Workshop.
 //  Licensed under the terms in the LICENSE file.
 //
@@ -12,7 +12,7 @@
 //  Responsibilities:
 //  - Presents the main Settings landing screen.
 //  - Routes to Settings subpages via standard iOS NavigationStack push.
-//  - Contains only lightweight explanatory text (no LM Studio wiring here).
+//  - Contains only lightweight explanatory text (no Server wiring here).
 //
 
 import SwiftUI
@@ -24,15 +24,15 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             List {
-                // MARK: - LM Studio
+                // MARK: - Server
                 Section {
                     NavigationLink {
-                        LMStudioSettingsView()
+                        ServerSettingsView()
                     } label: {
-                        Label("LM Studio Connection", systemImage: "server.rack")
+                        Label("Server Connection", systemImage: "server.rack")
                     }
 
-                    Text("Tell Astrid what the URL of your LM Studio server is.")
+                    Text("Tell Astrid what the URL of your Server server is.")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }

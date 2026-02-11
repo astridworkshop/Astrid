@@ -8,7 +8,7 @@
 //
 //  Responsibilities:
 //  - Explain what Astrid is (local LLM client).
-//  - Clarify where models run (LM Studio on user's machine).
+//  - Clarify where models run (Server on user's machine).
 //  - Provide privacy and data handling information.
 //  - Display version and license information.
 //  - Link to external resources and documentation.

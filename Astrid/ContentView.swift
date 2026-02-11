@@ -156,7 +156,7 @@ final class ProfileStore {
 
 struct ContentView: View {
     @StateObject private var viewModel = ChatViewModel(
-        client: LMStudioClient(baseURL: "http://192.168.50.82:1234")
+        client: ServerClient(baseURL: "http://192.168.50.82:1234")
     )
 
     // NavigationSplitView control
@@ -178,8 +178,8 @@ struct ContentView: View {
 
     @State private var sidebarSelection: SidebarItem? = .chats
 
-    // LM Studio server URL (drives reachability refresh for the sidebar indicator).
-    @AppStorage("lmstudio.serverURL") private var lmStudioServerURL: String = ""
+    // Server server URL (drives reachability refresh for the sidebar indicator).
+    @AppStorage("Server.serverURL") private var ServerServerURL: String = ""
     @AppStorage("astrid.hasCompletedServerOnboarding") private var hasCompletedServerOnboarding: Bool = false
     @State private var onboardingServerURL: String = ""
 
@@ -268,7 +268,7 @@ struct ContentView: View {
 
     private var shouldShowServerOnboarding: Bool {
         !hasCompletedServerOnboarding
-            && lmStudioServerURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && ServerServerURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     private var canContinueOnboarding: Bool {
@@ -1239,7 +1239,7 @@ You are not a replacement for professional medical, legal, or crisis services.
                     Button("Continue") {
                         let trimmed = onboardingServerURL.trimmingCharacters(in: .whitespacesAndNewlines)
                         guard !trimmed.isEmpty else { return }
-                        lmStudioServerURL = trimmed
+                        ServerServerURL = trimmed
                         hasCompletedServerOnboarding = true
                         hasDismissedLaunchSplash = true
                         didAutoStartNewChatAfterSplash = true
@@ -1265,7 +1265,7 @@ You are not a replacement for professional medical, legal, or crisis services.
                 .padding(.horizontal, 28)
                 .onAppear {
                     if onboardingServerURL.isEmpty {
-                        onboardingServerURL = lmStudioServerURL
+                        onboardingServerURL = ServerServerURL
                     }
                 }
             }
@@ -1465,7 +1465,7 @@ You are not a replacement for professional medical, legal, or crisis services.
     @ViewBuilder
     private var sidebarWithSelection: some View {
         AstridSidebarView(
-            isServerOnline: viewModel.isLMStudioReachable,
+            isServerOnline: viewModel.isServerReachable,
             sessions: historySessions,
             titleForSession: { historyTitle(for: $0) },
             profileCatalog: $profileCatalog,
@@ -1519,7 +1519,7 @@ You are not a replacement for professional medical, legal, or crisis services.
     @ViewBuilder
     private var sidebarWithoutSelection: some View {
         AstridSidebarView(
-            isServerOnline: viewModel.isLMStudioReachable,
+            isServerOnline: viewModel.isServerReachable,
             sessions: historySessions,
             titleForSession: { historyTitle(for: $0) },
             profileCatalog: $profileCatalog,
@@ -1937,8 +1937,8 @@ You are not a replacement for professional medical, legal, or crisis services.
         }
         .overlay(profileSwitchConfirmationOverlay)
         .overlay(serverOnboardingOverlay)
-        .onChange(of: lmStudioServerURL) { _, _ in
-            Task { await viewModel.refreshLMStudioModel() }
+        .onChange(of: ServerServerURL) { _, _ in
+            Task { await viewModel.refreshServerModel() }
         }
     }
 }

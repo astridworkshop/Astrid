@@ -1,28 +1,28 @@
 //
-//  LMStudioSettingsView.swift
+//  ServerSettingsView.swift
 //  Astrid
 //
-//  Settings subpage for configuring the LM Studio server URL.
-//  Presented from SettingsView and used by ContentView for LM Studio connectivity UX.
+//  Settings subpage for configuring the Server server URL.
+//  Presented from SettingsView and used by ContentView for Server connectivity UX.
 //  Copyright © 2026 Astrid Workshop.
 //  Licensed under the terms in the LICENSE file.
 //
-//  Session 8A — LM Studio Connection Settings
+//  Session 8A — Server Connection Settings
 //
 //  Responsibilities:
-//  - Allow the user to configure the LM Studio server URL.
+//  - Allow the user to configure the Server server URL.
 //  - Provide clear guidance for local vs network-based setups.
 //  - UI only for now; persistence and connection testing can be added later.
 //
 
 import SwiftUI
 
-struct LMStudioSettingsView: View {
+struct ServerSettingsView: View {
     // Stub state — replace with persisted settings later
-    @AppStorage("lmstudio.serverURL") private var serverURL: String = ""
+    @AppStorage("Server.serverURL") private var serverURL: String = ""
     @State private var validationState: ValidationState = .idle
     @State private var validationTask: Task<Void, Never>?
-    @AppStorage("lmstudio.hasShownMissingURLAlert") private var hasShownMissingURLAlert = false
+    @AppStorage("Server.hasShownMissingURLAlert") private var hasShownMissingURLAlert = false
     @State private var isMissingURLAlertPresented = false
 
     private let deepSpaceBlack = Color(red: 0.05, green: 0.07, blue: 0.12)
@@ -58,7 +58,7 @@ struct LMStudioSettingsView: View {
                             .stroke(Color(uiColor: .separator), lineWidth: 1.0)
                     )
 
-                Text("Enter the address where LM Studio is serving requests. This is typically found in LM Studio in the Reachable at box.")
+                Text("Enter the address where your local LLM server is serving requests (e.g., http://192.168.1.100:1234). Check your server software for the exact address.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -68,7 +68,7 @@ struct LMStudioSettingsView: View {
                         .foregroundStyle(.orange)
                         .font(.system(size: 14, weight: .semibold))
                         .padding(.top, 2)
-                    Text("Warning: The first response from LM Studio can be slow while the model spins up.")
+                    Text("Note: The first response may be slow while the model loads into memory.")
                         .font(.footnote)
                         .foregroundStyle(.primary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -116,10 +116,9 @@ struct LMStudioSettingsView: View {
 
             Section {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("• LM Studio must be running with the server enabled.")
-                    Text("• Turn on Local Server in LM Studio (Server Settings).")
+                    Text("• Your local LLM server must be running and accepting connections.")
                     Text("• The server must be reachable from this device.")
-                    Text("• Use your Mac's LAN IP, not 127.0.0.1.")
+                    Text("• Use your computer's LAN IP address, not 127.0.0.1 or localhost.")
                     Text("• Both devices should be on the same Wi‑Fi network.")
                 }
                 .font(.footnote)
@@ -138,7 +137,7 @@ struct LMStudioSettingsView: View {
             )
             .ignoresSafeArea()
         )
-        .navigationTitle("LM Studio Connection")
+        .navigationTitle("Server Connection")
         .alert("Server URL Required", isPresented: $isMissingURLAlertPresented) {
             Button("OK", role: .cancel) { }
         } message: {
@@ -213,7 +212,7 @@ struct LMStudioSettingsView: View {
 
     @MainActor
     private func validateConnection() async {
-        let normalizedBase = LMStudioClient(baseURL: serverURL).baseURLString
+        let normalizedBase = ServerClient(baseURL: serverURL).baseURLString
         guard let url = URL(string: normalizedBase)?
             .appendingPathComponent("v1")
             .appendingPathComponent("models") else {
@@ -246,6 +245,6 @@ struct LMStudioSettingsView: View {
 
 #Preview {
     NavigationStack {
-        LMStudioSettingsView()
+        ServerSettingsView()
     }
 }

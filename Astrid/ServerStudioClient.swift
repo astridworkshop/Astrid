@@ -1,8 +1,8 @@
 //
-//  LMStudioClient.swift
+//  ServerClient.swift
 //  Astrid
 //
-//  HTTP client and shared chat message model for LM Studio's OpenAI-compatible API.
+//  HTTP client and shared chat message model for Server's OpenAI-compatible API.
 //  Used by ChatViewModel to send chat completions and auxiliary requests.
 //  Copyright © 2026 Astrid Workshop.
 //  Licensed under the terms in the LICENSE file.
@@ -10,7 +10,7 @@
 //  Milestone 1 — Core Chat UI
 //
 //  Responsibilities (current):
-//  - Thin HTTP client for LM Studio’s OpenAI-compatible endpoint: `/v1/chat/completions`.
+//  - Thin HTTP client for Server’s OpenAI-compatible endpoint: `/v1/chat/completions`.
 //  - Defines UI-facing `ChatMessage` + role model and converts transcripts to API payloads.
 //  - Sends non-streaming chat completions for:
 //      - Full chat replies (system prompt + transcript)
@@ -106,9 +106,9 @@ struct ChatCompletionResponse: Decodable {
     let usage: Usage?
 }
 
-// MARK: - LM Studio Client
+// MARK: - Server Client
 
-final class LMStudioClient {
+final class ServerClient {
     enum ClientError: Error, LocalizedError {
         case badURL
         case serverUnreachable(String)
@@ -120,17 +120,17 @@ final class LMStudioClient {
         var errorDescription: String? {
             switch self {
             case .badURL:
-                return "Bad server URL. Check your LM Studio connection settings."
+                return "Bad server URL. Check your Server connection settings."
             case .serverUnreachable(let detail):
-                return "LM Studio is not reachable. Make sure the server is running and the URL is correct.\n\n\(detail)"
+                return "Server is not reachable. Make sure the server is running and the URL is correct.\n\n\(detail)"
             case .requestTimedOut:
-                return "The request timed out. LM Studio may be busy or the model may be too slow to respond."
+                return "The request timed out. Server may be busy or the model may be too slow to respond."
             case .httpStatus(let code, let body):
                 return "Server returned HTTP \(code).\n\(body)"
             case .noChoices:
-                return "LM Studio returned an empty response. The model may still be loading — try again in a moment."
+                return "Server returned an empty response. The model may still be loading — try again in a moment."
             case .decodingFailed(let detail):
-                return "Unexpected response from LM Studio. The server may be loading a model or returned an invalid response.\n\n\(detail)"
+                return "Unexpected response from Server. The server may be loading a model or returned an invalid response.\n\n\(detail)"
             }
         }
     }
@@ -309,7 +309,7 @@ final class LMStudioClient {
         case .notConnectedToInternet:
             return .serverUnreachable("This device is not connected to the internet.")
         case .secureConnectionFailed:
-            return .serverUnreachable("Secure connection failed. LM Studio typically uses http://, not https://.")
+            return .serverUnreachable("Secure connection failed. Server typically uses http://, not https://.")
         default:
             return .serverUnreachable("Network error: \(error.localizedDescription)")
         }
