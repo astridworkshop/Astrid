@@ -162,11 +162,14 @@ struct ContentView: View {
     // NavigationSplitView control
     @State private var columnVisibility: NavigationSplitViewVisibility = .detailOnly
     @State private var didSetInitialSplitViewState: Bool = false
+    @State private var didApplyLaunchSplashReset: Bool = false
+    @State private var didResetForActivePhase: Bool = false
     
     // For iPhone: present sidebar as an overlay since NavigationSplitView doesn't respond well
     // to programmatic visibility changes in compact mode
     @State private var showSidebarOverlay: Bool = false
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.scenePhase) private var scenePhase
 
     private enum SidebarItem: Hashable {
         case chats
@@ -176,7 +179,9 @@ struct ContentView: View {
     @State private var sidebarSelection: SidebarItem? = .chats
 
     // LM Studio server URL (drives reachability refresh for the sidebar indicator).
-    @AppStorage("lmstudio.serverURL") private var lmStudioServerURL: String = "http://192.168.50.82:1234"
+    @AppStorage("lmstudio.serverURL") private var lmStudioServerURL: String = ""
+    @AppStorage("astrid.hasCompletedServerOnboarding") private var hasCompletedServerOnboarding: Bool = false
+    @State private var onboardingServerURL: String = ""
 
     // MARK: - Session 7.5: Chat Deletion (Manual Only)
     @State private var pendingDeleteSessionID: UUID? = nil
@@ -259,6 +264,15 @@ struct ContentView: View {
 
     private var shouldShowSplash: Bool {
         !hasDismissedLaunchSplash
+    }
+
+    private var shouldShowServerOnboarding: Bool {
+        !hasCompletedServerOnboarding
+            && lmStudioServerURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    private var canContinueOnboarding: Bool {
+        !onboardingServerURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
     
     // Helper to detect if we're on iPhone (compact width)
@@ -1180,6 +1194,86 @@ You are not a replacement for professional medical, legal, or crisis services.
     }
 
     @ViewBuilder
+    private var serverOnboardingOverlay: some View {
+        if shouldShowServerOnboarding {
+            ZStack {
+                Color.black.opacity(0.55)
+                    .ignoresSafeArea()
+
+                VStack(spacing: 18) {
+                    Image(systemName: "sparkles")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 88, height: 88)
+                        .foregroundStyle(.white)
+                        .shadow(color: .white.opacity(0.8), radius: 16, x: 0, y: 0)
+                        .opacity(0.9)
+
+                    VStack(spacing: 6) {
+                        Text("Astrid")
+                            .font(.system(size: 34, weight: .regular, design: .default))
+                            .foregroundStyle(.white)
+
+                        Text("Your hardware. Your models. Your AI")
+                            .font(.subheadline)
+                            .foregroundStyle(.gray)
+                    }
+
+                    Text("Hello, in order to get started please enter the url of the server you want to connect to")
+                        .font(.subheadline)
+                        .foregroundStyle(.white.opacity(0.92))
+                        .multilineTextAlignment(.center)
+
+                    TextField("Enter Server Address", text: $onboardingServerURL)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled(true)
+                        .keyboardType(.URL)
+                        .padding(12)
+                        .background(Color(uiColor: .tertiarySystemBackground))
+                        .cornerRadius(8)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color(uiColor: .separator), lineWidth: 1.0)
+                        )
+
+                    Button("Continue") {
+                        let trimmed = onboardingServerURL.trimmingCharacters(in: .whitespacesAndNewlines)
+                        guard !trimmed.isEmpty else { return }
+                        lmStudioServerURL = trimmed
+                        hasCompletedServerOnboarding = true
+                        hasDismissedLaunchSplash = true
+                        didAutoStartNewChatAfterSplash = true
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(sendButtonColor)
+                    .disabled(!canContinueOnboarding)
+                    .opacity(canContinueOnboarding ? 1.0 : 0.7)
+                }
+                .padding(24)
+                .background(
+                    LinearGradient(
+                        gradient: Gradient(colors: [spaceBlue, deepSpaceBlack]),
+                        startPoint: .center,
+                        endPoint: .bottom
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                )
+                .padding(.horizontal, 28)
+                .onAppear {
+                    if onboardingServerURL.isEmpty {
+                        onboardingServerURL = lmStudioServerURL
+                    }
+                }
+            }
+            .transition(.opacity)
+        }
+    }
+
+    @ViewBuilder
     private var chatCenter: some View {
         ScrollViewReader { proxy in
             ZStack(alignment: .bottomTrailing) {
@@ -1652,6 +1746,13 @@ You are not a replacement for professional medical, legal, or crisis services.
             }
         }
         .onAppear {
+            if !didApplyLaunchSplashReset {
+                hasDismissedLaunchSplash = false
+                didAutoStartNewChatAfterSplash = false
+                isInputFocusedProxy = false
+                didApplyLaunchSplashReset = true
+            }
+
             // Load persisted profiles/defaults (falls back to built-ins if needed).
             profileCatalog = ProfileStore.shared.loadCatalog()
             print("[Astrid] ContentView appeared — loaded profiles: \(profileCatalog.profiles.count), default=\(profileCatalog.defaultProfile.name)")
@@ -1683,6 +1784,19 @@ You are not a replacement for professional medical, legal, or crisis services.
             didSetInitialSplitViewState = true
             columnVisibility = .detailOnly
             sidebarSelection = .chats
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            guard newPhase == .active else {
+                didResetForActivePhase = false
+                return
+            }
+
+            if hasCompletedServerOnboarding, !didResetForActivePhase {
+                hasDismissedLaunchSplash = false
+                didAutoStartNewChatAfterSplash = false
+                isInputFocusedProxy = false
+                didResetForActivePhase = true
+            }
         }
         .onChange(of: profileCatalog.defaultProfileID) { _, _ in
             if suppressProfileChangeSideEffects {
@@ -1822,6 +1936,7 @@ You are not a replacement for professional medical, legal, or crisis services.
             }
         }
         .overlay(profileSwitchConfirmationOverlay)
+        .overlay(serverOnboardingOverlay)
         .onChange(of: lmStudioServerURL) { _, _ in
             Task { await viewModel.refreshLMStudioModel() }
         }
