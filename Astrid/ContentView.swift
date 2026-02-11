@@ -1635,20 +1635,6 @@ You are not a replacement for professional medical, legal, or crisis services.
                         .navigationBarBackButtonHidden(true)
                         .toolbar {
                             if sidebarSelection != .settings {
-                                ToolbarItem(placement: .topBarLeading) {
-                                    Button {
-                                        // Dismiss keyboard before opening sidebar
-                                        isInputFocusedProxy = false
-
-                                        // On iPad: toggle the split view column
-                                        withAnimation {
-                                            columnVisibility = (columnVisibility == .detailOnly) ? .all : .detailOnly
-                                        }
-                                    } label: {
-                                        Image(systemName: "line.3.horizontal")
-                                    }
-                                }
-                                
                                 if !shouldShowSplash {
                                     ToolbarItem(placement: .topBarTrailing) {
                                         Button {

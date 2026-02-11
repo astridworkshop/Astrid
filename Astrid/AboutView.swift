@@ -24,7 +24,7 @@ struct AboutView: View {
         Form {
             Section {
                 Text("""
-Astrid is an iOS chat client that connects to LM Studio running on your Mac or PC. It does not run models on your iPhone — you need a separate computer with LM Studio installed.
+Astrid is a private, OpenAI-compatible local AI client that works with tools such as LM Studio and other self-hosted model servers. It does not run models on your iPhone — you need a separate computer with a OpenAI-compatible server such as LM Studio installed.
 
 Astrid is an open source independent project and is not affiliated with LM Studio or its creators.
 """)
@@ -35,15 +35,14 @@ Astrid is an open source independent project and is not affiliated with LM Studi
             }
 
             Section {
-                // TODO: Replace with actual URLs when available
-                Link("GitHub repository (coming soon)", destination: URL(string: "https://example.com")!)
+                Link("GitHub repository", destination: URL(string: "https://github.com/astridworkshop/Astrid")!)
                     .font(.body)
             } header: {
                 SectionHeaderView("Links")
             }
 
             Section {
-                Text("Version 0.1 (Development)")
+                Text("Version 1.0")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             } header: {

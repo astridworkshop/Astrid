@@ -19,9 +19,11 @@ import SwiftUI
 
 struct LMStudioSettingsView: View {
     // Stub state — replace with persisted settings later
-    @AppStorage("lmstudio.serverURL") private var serverURL: String = "http://192.168.50.82:1234"
+    @AppStorage("lmstudio.serverURL") private var serverURL: String = ""
     @State private var validationState: ValidationState = .idle
     @State private var validationTask: Task<Void, Never>?
+    @AppStorage("lmstudio.hasShownMissingURLAlert") private var hasShownMissingURLAlert = false
+    @State private var isMissingURLAlertPresented = false
 
     private let deepSpaceBlack = Color(red: 0.05, green: 0.07, blue: 0.12)
     private let spaceBlue = Color(red: 0.1, green: 0.15, blue: 0.25)
@@ -44,7 +46,7 @@ struct LMStudioSettingsView: View {
     var body: some View {
         Form {
             Section {
-                TextField("http://localhost:1234", text: $serverURL)
+                TextField("Enter Server Address", text: $serverURL)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled(true)
                     .keyboardType(.URL)
@@ -137,6 +139,11 @@ struct LMStudioSettingsView: View {
             .ignoresSafeArea()
         )
         .navigationTitle("LM Studio Connection")
+        .alert("Server URL Required", isPresented: $isMissingURLAlertPresented) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("Please enter the server URL provided by the server before continuing.")
+        }
         .onChange(of: serverURL) { _, _ in
             scheduleValidation()
         }
@@ -189,6 +196,14 @@ struct LMStudioSettingsView: View {
 
     private func scheduleValidation() {
         validationTask?.cancel()
+        if serverURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            validationState = .idle
+            if !hasShownMissingURLAlert {
+                isMissingURLAlertPresented = true
+                hasShownMissingURLAlert = true
+            }
+            return
+        }
         validationTask = Task { @MainActor in
             validationState = .checking
             try? await Task.sleep(nanoseconds: 450_000_000)
