@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy — Astrid AI Client</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d1520;
+      --surface: #141f2e;
+      --border: #1e2d40;
+      --accent: #4a9eff;
+      --accent-dim: rgba(74, 158, 255, 0.12);
+      --text-primary: #e8edf2;
+      --text-secondary: #8a9bb0;
+      --text-muted: #4a5a6e;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-primary);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+
+    /* Subtle star field background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        radial-gradient(1px 1px at 15% 20%, rgba(255,255,255,0.3) 0%, transparent 100%),
+        radial-gradient(1px 1px at 72% 8%, rgba(255,255,255,0.2) 0%, transparent 100%),
+        radial-gradient(1px 1px at 88% 45%, rgba(255,255,255,0.15) 0%, transparent 100%),
+        radial-gradient(1px 1px at 33% 67%, rgba(255,255,255,0.2) 0%, transparent 100%),
+        radial-gradient(1px 1px at 55% 82%, rgba(255,255,255,0.1) 0%, transparent 100%),
+        radial-gradient(1px 1px at 8% 91%, rgba(255,255,255,0.15) 0%, transparent 100%),
+        radial-gradient(2px 2px at 44% 35%, rgba(74,158,255,0.15) 0%, transparent 100%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 80px 32px 120px;
+    }
+
+    header {
+      margin-bottom: 64px;
+      animation: fadeUp 0.6s ease both;
+    }
+
+    .logo-mark {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 40px;
+      text-decoration: none;
+    }
+
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      color: var(--accent);
+    }
+
+    .logo-text {
+      font-family: 'DM Serif Display', serif;
+      font-size: 18px;
+      color: var(--text-primary);
+      letter-spacing: 0.02em;
+    }
+
+    .page-label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(32px, 5vw, 48px);
+      font-weight: 400;
+      line-height: 1.15;
+      color: var(--text-primary);
+      margin-bottom: 16px;
+    }
+
+    .tagline {
+      font-size: 16px;
+      color: var(--text-secondary);
+      font-style: italic;
+    }
+
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, var(--accent) 0%, var(--border) 60%, transparent 100%);
+      margin: 48px 0;
+      animation: fadeUp 0.6s ease 0.1s both;
+    }
+
+    .highlight-box {
+      background: var(--accent-dim);
+      border: 1px solid rgba(74, 158, 255, 0.2);
+      border-radius: 12px;
+      padding: 24px 28px;
+      margin-bottom: 48px;
+      animation: fadeUp 0.6s ease 0.2s both;
+    }
+
+    .highlight-box p {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.65;
+    }
+
+    .highlight-box strong {
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    section {
+      margin-bottom: 44px;
+      animation: fadeUp 0.6s ease 0.3s both;
+    }
+
+    section + section {
+      animation-delay: 0.35s;
+    }
+
+    section:nth-child(3) { animation-delay: 0.4s; }
+    section:nth-child(4) { animation-delay: 0.45s; }
+    section:nth-child(5) { animation-delay: 0.5s; }
+
+    h2 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 22px;
+      font-weight: 400;
+      color: var(--text-primary);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    h2::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 20px;
+      background: var(--accent);
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    p {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.75;
+    }
+
+    footer {
+      margin-top: 80px;
+      padding-top: 32px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      animation: fadeUp 0.6s ease 0.6s both;
+    }
+
+    footer p {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+      transition: opacity 0.2s;
+    }
+
+    footer a:hover {
+      opacity: 0.75;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(16px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        padding: 48px 24px 80px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <header>
+      <a class="logo-mark" href="#">
+        <svg class="logo-icon" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M16 4L18.5 13.5L28 16L18.5 18.5L16 28L13.5 18.5L4 16L13.5 13.5L16 4Z" fill="currentColor" opacity="0.9"/>
+          <path d="M24 6L24.8 9.2L28 10L24.8 10.8L24 14L23.2 10.8L20 10L23.2 9.2L24 6Z" fill="currentColor" opacity="0.5"/>
+        </svg>
+        <span class="logo-text">Astrid</span>
+      </a>
+
+      <p class="page-label">Legal</p>
+      <h1>Privacy Policy</h1>
+      <p class="tagline">Your data stays where it belongs — with you.</p>
+    </header>
+
+    <div class="divider"></div>
+
+    <div class="highlight-box">
+      <p><strong>The short version:</strong> Astrid collects absolutely nothing. No analytics, no accounts, no telemetry. Every conversation stays on your own hardware and network. This policy exists to make that promise explicit.</p>
+    </div>
+
+    <section>
+      <h2>No Data Collection</h2>
+      <p>Astrid AI Client does not collect, transmit, store, or share any personal data. All conversations occur exclusively between your iOS device and the local AI server you configure on your own hardware and network. Nothing is routed through Astrid Workshop servers or any third-party service.</p>
+    </section>
+
+    <section>
+      <h2>No Accounts Required</h2>
+      <p>Astrid requires no user accounts, registration, email address, or sign-in of any kind. You can use the app fully without providing any identifying information.</p>
+    </section>
+
+    <section>
+      <h2>Local Storage Only</h2>
+      <p>Chat history, profiles, and app settings are stored locally on your device only. This data never leaves your device or local network. It is not backed up to any external service by Astrid.</p>
+    </section>
+
+    <section>
+      <h2>No Third-Party Services</h2>
+      <p>Astrid does not integrate any analytics platforms, advertising networks, crash reporting services, or third-party tracking of any kind. The app makes no outbound network requests except to the local server address you explicitly configure.</p>
+    </section>
+
+    <section>
+      <h2>Changes to This Policy</h2>
+      <p>If this policy changes in a future version of Astrid, the updated policy will be published here and the "Last updated" date below will reflect the change.</p>
+    </section>
+
+    <footer>
+      <p>Last updated: February 2026</p>
+      <p>Questions? Contact us at <a href="mailto:hello@astridworkshop.org">hello@astridworkshop.org</a></p>
+      <p>Astrid is an open source project by <a href="https://astridworkshop.org">Astrid Workshop</a></p>
+    </footer>
+
+  </div>
+</body>
+</html>
